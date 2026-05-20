@@ -1,121 +1,60 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useEffect, useState } from 'react'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [campaigns, setCampaigns] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    fetch('http://localhost:3000/api/campaigns')
+      .then(res => res.json())
+      .then(data => { setCampaigns(data); setLoading(false) })
+      .catch(() => { setError('Could not connect to server.'); setLoading(false) })
+  }, [])
+
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-screen text-gray-500 text-lg">
+      Loading campaigns...
+    </div>
+  )
+
+  if (error) return (
+    <div className="flex items-center justify-center min-h-screen text-red-500 text-lg">
+      {error}
+    </div>
+  )
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="min-h-screen bg-gray-50 px-6 py-10">
+      <h1 className="text-3xl font-bold text-gray-800 mb-8">Campaigns</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {campaigns.map(c => {
+          const pct = Math.min(c.progress, 100)
+          return (
+            <div key={c.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col gap-3">
+              <h2 className="text-lg font-semibold text-gray-800">{c.title || '(no title)'}</h2>
+              <p className="text-sm text-gray-500 flex-1">{c.description || '(no description)'}</p>
 
-      <div className="ticks"></div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-violet-500 h-2 rounded-full transition-all"
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>${c.raisedAmount.toLocaleString()} raised</span>
+                <span>{c.progress}% of ${c.goalAmount.toLocaleString()}</span>
+              </div>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+              {c.endDate && (
+                <p className="text-xs text-gray-400">Ends: {c.endDate}</p>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
