@@ -177,7 +177,7 @@ const Dashboard = () => {
               </div>
               <div className="form-group">
                 <label className="form-label">Goal Amount ($) *</label>
-                <input type="number" className="form-control" value={form.goalAmount} onChange={e => setForm({ ...form, goalAmount: e.target.value })} placeholder="50000" />
+                <input type="number" className="form-control" value={form.goalAmount} onChange={e => setForm({ ...form, goalAmount: e.target.value })} placeholder="50000" min="1" />
               </div>
             </div>
             <div className="form-group">

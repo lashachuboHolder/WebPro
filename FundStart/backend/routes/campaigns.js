@@ -66,6 +66,9 @@ router.post('/', authenticate, requireRole('influencer', 'admin'), (req, res) =>
   if (!title || !description || !goalAmount || !endDate) {
     return res.status(400).json({ error: 'Title, description, goal amount, and end date are required.' });
   }
+  if (Number(goalAmount) <= 0) {
+    return res.status(400).json({ error: 'Goal amount must be greater than 0.' });
+  }
 
   const newCampaign = {
     id: uuidv4(),
