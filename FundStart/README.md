@@ -1,5 +1,12 @@
 # Fundstart - Fundraising Platform
 
+| github username | Full Name        |
+|-----------------|------------------|
+| lashachubo      | Lasha Chubinidze |
+| Sabagelashh     | Saba Gelashvili  |
+| iraklikasradze  | Irakli Kasradze  |
+
+
 ## How to Run
 
 ### 1. Start the Backend
