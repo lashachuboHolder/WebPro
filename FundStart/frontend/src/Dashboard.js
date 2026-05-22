@@ -71,7 +71,7 @@ const Dashboard = () => {
           <div className="dash-welcome">
             <img src={user.avatar} alt={user.name} className="dash-avatar" />
             <div>
-              <h1 className="dash-title">Welcome, {user.name} 👋</h1>
+              <h1 className="dash-title">Welcome, {user.name}</h1>
               <p className="dash-sub">Manage your campaigns and track your impact</p>
             </div>
           </div>

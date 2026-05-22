@@ -39,7 +39,6 @@ export const Login = () => {
       <div className="auth-card card">
         <div className="card-body">
           <div className="auth-logo">
-            <span>🌱</span>
             <span className="auth-brand">Fundstart</span>
           </div>
           <h1 className="auth-title">Welcome back</h1>
@@ -62,7 +61,7 @@ export const Login = () => {
           </form>
 
           <div className="demo-accounts">
-            <p className="demo-title">Quick Demo Login</p>
+            <p className="demo-title">Quick Login</p>
             <div className="demo-grid">
               {DEMOS.map(d => (
                 <button key={d.email} className="demo-btn" onClick={() => doLogin(null, d.email, d.pass)}>
@@ -108,7 +107,6 @@ export const Register = () => {
       <div className="auth-card card">
         <div className="card-body">
           <div className="auth-logo">
-            <span>🌱</span>
             <span className="auth-brand">Fundstart</span>
           </div>
           <h1 className="auth-title">Create account</h1>
@@ -133,12 +131,10 @@ export const Register = () => {
               <label className="form-label">I want to...</label>
               <div className="role-select">
                 <button type="button" className={`role-btn ${form.role === 'donor' ? 'active' : ''}`} onClick={() => setForm({ ...form, role: 'donor' })}>
-                  <span className="role-icon">💚</span>
                   <span className="role-label">Donate to Campaigns</span>
                   <span className="role-desc">Support creators you love</span>
                 </button>
                 <button type="button" className={`role-btn ${form.role === 'influencer' ? 'active' : ''}`} onClick={() => setForm({ ...form, role: 'influencer' })}>
-                  <span className="role-icon">🚀</span>
                   <span className="role-label">Create Campaigns</span>
                   <span className="role-desc">Raise funds for your project</span>
                 </button>
