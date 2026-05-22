@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from './api';
 import CampaignCard from './CampaignCard';
+import { useAuth } from './AuthContext';
 
 const Home = () => {
+  const { user } = useAuth();
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -22,7 +24,9 @@ const Home = () => {
         <p>Where influencers create campaigns and fans make big ideas real. Every donation creates impact.</p>
         <div className="hero-btns">
           <Link to="/campaigns" className="btn btn-primary btn-lg">Explore Campaigns</Link>
-          <Link to="/register" className="btn btn-outline btn-lg">Start a Campaign</Link>
+          {user?.role === 'influencer' && (
+            <Link to="/dashboard" className="btn btn-outline btn-lg">Start a Campaign</Link>
+          )}
         </div>
         <div className="hero-stats">
           <div className="h-stat"><span className="h-stat-val">$500K+</span><span className="h-stat-lbl">Total Raised</span></div>

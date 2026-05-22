@@ -14,7 +14,7 @@ const CampaignDetail = () => {
   const [donations, setDonations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDonate, setShowDonate] = useState(false);
-  const [amount, setAmount] = useState(132);
+  const [amount, setAmount] = useState(5);
   const [message, setMessage] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('VISA');
   const [donating, setDonating] = useState(false);
