@@ -51,7 +51,7 @@ const AdminPanel = () => {
     <div>
       <div className="admin-header">
         <div className="container">
-          <h1 className="admin-title">🛡️ Admin Panel</h1>
+          <h1 className="admin-title">Admin Panel</h1>
           <p style={{ color: '#94a3b8' }}>Platform overview and moderation tools</p>
         </div>
       </div>
