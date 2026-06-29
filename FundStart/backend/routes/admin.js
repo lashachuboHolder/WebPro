@@ -1,38 +1,47 @@
 const express = require('express');
 const router = express.Router();
-const { users, campaigns, donations } = require('../data/seed');
+const { supabase, camel } = require('../lib/supabase');
 const { authenticate, requireRole } = require('../middleware/auth');
 
-router.get('/stats', authenticate, requireRole('admin'), (req, res) => {
-  const totalRaised = campaigns.reduce((sum, c) => sum + c.raisedAmount, 0);
-  const totalDonations = donations.reduce((sum, d) => sum + d.amount, 0);
-  const activeCampaigns = campaigns.filter(c => c.status === 'active').length;
-  const totalUsers = users.filter(u => u.role !== 'admin').length;
+router.get('/stats', authenticate, requireRole('admin'), async (req, res) => {
+  const [
+    { data: campaigns },
+    { data: donations },
+    { data: users }
+  ] = await Promise.all([
+    supabase.from('campaigns').select('*'),
+    supabase.from('donations').select('*, campaigns(title)').order('created_at', { ascending: false }),
+    supabase.from('users').select('id, role')
+  ]);
+
+  const c = camel(campaigns);
+  const d = camel(donations);
+
+  const totalRaised = c.reduce((sum, x) => sum + Number(x.raisedAmount), 0);
+  const activeCampaigns = c.filter(x => x.status === 'active').length;
   const influencers = users.filter(u => u.role === 'influencer').length;
   const donors = users.filter(u => u.role === 'donor').length;
 
   const categoryStats = {};
-  campaigns.forEach(c => {
-    if (!categoryStats[c.category]) categoryStats[c.category] = { count: 0, raised: 0 };
-    categoryStats[c.category].count++;
-    categoryStats[c.category].raised += c.raisedAmount;
+  c.forEach(x => {
+    if (!categoryStats[x.category]) categoryStats[x.category] = { count: 0, raised: 0 };
+    categoryStats[x.category].count++;
+    categoryStats[x.category].raised += Number(x.raisedAmount);
   });
 
-  const recentDonations = donations
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .slice(0, 5)
-    .map(d => {
-      const campaign = campaigns.find(c => c.id === d.campaignId);
-      return { ...d, campaignTitle: campaign?.title || 'Unknown' };
-    });
+  const recentDonations = d.slice(0, 5).map(x => ({
+    ...x,
+    campaignTitle: x.campaigns?.title || 'Unknown',
+    campaigns: undefined
+  }));
 
   res.json({
     stats: {
       totalRaised,
-      totalDonations: donations.length,
+      totalDonations: d.length,
       activeCampaigns,
-      totalCampaigns: campaigns.length,
-      totalUsers,
+      totalCampaigns: c.length,
+      totalUsers: influencers + donors,
       influencers,
       donors
     },
@@ -41,40 +50,56 @@ router.get('/stats', authenticate, requireRole('admin'), (req, res) => {
   });
 });
 
-router.get('/users', authenticate, requireRole('admin'), (req, res) => {
-  const safeUsers = users.map(({ password, ...u }) => ({
+router.get('/users', authenticate, requireRole('admin'), async (req, res) => {
+  const [{ data: users }, { data: campaigns }, { data: donations }] = await Promise.all([
+    supabase.from('users').select('id, name, email, role, avatar, created_at'),
+    supabase.from('campaigns').select('id, influencer_id'),
+    supabase.from('donations').select('id, donor_id')
+  ]);
+
+  const result = camel(users).map(u => ({
     ...u,
-    campaignCount: campaigns.filter(c => c.influencerId === u.id).length,
-    donationCount: donations.filter(d => d.donorId === u.id).length
+    campaignCount: campaigns.filter(c => c.influencer_id === u.id).length,
+    donationCount: donations.filter(d => d.donor_id === u.id).length
   }));
-  res.json({ users: safeUsers, total: safeUsers.length });
+
+  res.json({ users: result, total: result.length });
 });
 
-router.get('/campaigns', authenticate, requireRole('admin'), (req, res) => {
-  const enriched = campaigns.map(c => {
-    const influencer = users.find(u => u.id === c.influencerId);
-    return {
-      ...c,
-      influencerName: influencer?.name || 'Unknown',
-      progressPercent: Math.round((c.raisedAmount / c.goalAmount) * 100),
-      daysLeft: Math.max(0, Math.ceil((new Date(c.endDate) - new Date()) / (1000 * 60 * 60 * 24))),
-      donationCount: donations.filter(d => d.campaignId === c.id).length
-    };
-  });
-  res.json({ campaigns: enriched, total: enriched.length });
+router.get('/campaigns', authenticate, requireRole('admin'), async (req, res) => {
+  const [{ data: campaigns }, { data: donations }] = await Promise.all([
+    supabase.from('campaigns').select('*, users(name)'),
+    supabase.from('donations').select('id, campaign_id')
+  ]);
+
+  const result = camel(campaigns).map(c => ({
+    ...c,
+    influencerName: c.users?.name || 'Unknown',
+    users: undefined,
+    progressPercent: Math.round((c.raisedAmount / c.goalAmount) * 100),
+    daysLeft: Math.max(0, Math.ceil((new Date(c.endDate) - new Date()) / (1000 * 60 * 60 * 24))),
+    donationCount: donations.filter(d => d.campaign_id === c.id).length
+  }));
+
+  res.json({ campaigns: result, total: result.length });
 });
 
-router.put('/campaigns/:id/status', authenticate, requireRole('admin'), (req, res) => {
-  const idx = campaigns.findIndex(c => c.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ error: 'Campaign not found.' });
-
+router.put('/campaigns/:id/status', authenticate, requireRole('admin'), async (req, res) => {
   const { status } = req.body;
   if (!['active', 'suspended', 'completed', 'flagged'].includes(status)) {
     return res.status(400).json({ error: 'Invalid status.' });
   }
 
-  campaigns[idx].status = status;
-  res.json({ campaign: campaigns[idx], message: `Campaign status updated to ${status}.` });
+  const { data, error } = await supabase
+    .from('campaigns')
+    .update({ status })
+    .eq('id', req.params.id)
+    .select();
+
+  if (error) return res.status(500).json({ error: 'Database error.' });
+  if (!data.length) return res.status(404).json({ error: 'Campaign not found.' });
+
+  res.json({ campaign: camel(data[0]), message: `Campaign status updated to ${status}.` });
 });
 
 module.exports = router;

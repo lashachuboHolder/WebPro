@@ -1,6 +1,3 @@
-// Simple token-based auth middleware (no JWT library needed for demo)
-const { users } = require('../data/seed');
-
 // In-memory session store
 const sessions = {};
 

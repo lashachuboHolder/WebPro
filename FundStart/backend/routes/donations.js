@@ -1,52 +1,83 @@
 const express = require('express');
 const router = express.Router();
-const { v4: uuidv4 } = require('uuid');
-const { donations, campaigns, users } = require('../data/seed');
+const { supabase, camel } = require('../lib/supabase');
 const { authenticate, requireRole } = require('../middleware/auth');
 
-router.get('/my', authenticate, (req, res) => {
-  const myDonations = donations
-    .filter(d => d.donorId === req.user.id)
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .map(d => {
-      const campaign = campaigns.find(c => c.id === d.campaignId);
-      return { ...d, campaignTitle: campaign?.title || 'Unknown', campaignImage: campaign?.image };
-    });
-  res.json({ donations: myDonations, total: myDonations.length });
+router.get('/my', authenticate, async (req, res) => {
+  const { data, error } = await supabase
+    .from('donations')
+    .select('*, campaigns(title, image)')
+    .eq('donor_id', req.user.id)
+    .order('created_at', { ascending: false });
+
+  if (error) return res.status(500).json({ error: 'Database error.' });
+
+  const result = camel(data).map(d => ({
+    ...d,
+    campaignTitle: d.campaigns?.title || 'Unknown',
+    campaignImage: d.campaigns?.image,
+    campaigns: undefined
+  }));
+
+  res.json({ donations: result, total: result.length });
 });
 
-router.get('/campaign/:campaignId', authenticate, (req, res) => {
-  const campaign = campaigns.find(c => c.id === req.params.campaignId);
-  if (!campaign) return res.status(404).json({ error: 'Campaign not found.' });
+router.get('/campaign/:campaignId', authenticate, async (req, res) => {
+  const { data: campaigns, error: cErr } = await supabase
+    .from('campaigns')
+    .select('influencer_id')
+    .eq('id', req.params.campaignId)
+    .limit(1);
 
-  if (req.user.role === 'influencer' && campaign.influencerId !== req.user.id) {
+  if (cErr) return res.status(500).json({ error: 'Database error.' });
+  if (!campaigns.length) return res.status(404).json({ error: 'Campaign not found.' });
+
+  if (req.user.role === 'influencer' && campaigns[0].influencer_id !== req.user.id) {
     return res.status(403).json({ error: 'Forbidden.' });
   }
 
-  const campDonations = donations
-    .filter(d => d.campaignId === req.params.campaignId)
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  res.json({ donations: campDonations, total: campDonations.length });
+  const { data, error } = await supabase
+    .from('donations')
+    .select('*')
+    .eq('campaign_id', req.params.campaignId)
+    .order('created_at', { ascending: false });
+
+  if (error) return res.status(500).json({ error: 'Database error.' });
+  const result = camel(data);
+  res.json({ donations: result, total: result.length });
 });
 
-router.get('/', authenticate, requireRole('admin'), (req, res) => {
-  const enriched = donations
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .map(d => {
-      const campaign = campaigns.find(c => c.id === d.campaignId);
-      return { ...d, campaignTitle: campaign?.title || 'Unknown' };
-    });
-  res.json({ donations: enriched, total: enriched.length });
+router.get('/', authenticate, requireRole('admin'), async (req, res) => {
+  const { data, error } = await supabase
+    .from('donations')
+    .select('*, campaigns(title)')
+    .order('created_at', { ascending: false });
+
+  if (error) return res.status(500).json({ error: 'Database error.' });
+
+  const result = camel(data).map(d => ({
+    ...d,
+    campaignTitle: d.campaigns?.title || 'Unknown',
+    campaigns: undefined
+  }));
+
+  res.json({ donations: result, total: result.length });
 });
 
-router.post('/', authenticate, (req, res) => {
+router.post('/', authenticate, async (req, res) => {
   const { campaignId, amount, message, paymentMethod } = req.body;
-  if (!campaignId || !amount) {
-    return res.status(400).json({ error: 'Campaign ID and amount are required.' });
-  }
+  if (!campaignId || !amount) return res.status(400).json({ error: 'Campaign ID and amount are required.' });
 
-  const campaign = campaigns.find(c => c.id === campaignId);
-  if (!campaign) return res.status(404).json({ error: 'Campaign not found.' });
+  const { data: campaigns, error: cErr } = await supabase
+    .from('campaigns')
+    .select('*')
+    .eq('id', campaignId)
+    .limit(1);
+
+  if (cErr) return res.status(500).json({ error: 'Database error.' });
+  if (!campaigns.length) return res.status(404).json({ error: 'Campaign not found.' });
+
+  const campaign = camel(campaigns[0]);
   if (campaign.status !== 'active') return res.status(400).json({ error: 'Campaign is not active.' });
 
   const numAmount = Number(amount);
@@ -56,51 +87,73 @@ router.post('/', authenticate, (req, res) => {
   const convenienceFee = 5;
   const totalPaid = numAmount + tax + convenienceFee;
 
-  const donation = {
-    id: uuidv4(),
-    campaignId,
-    donorId: req.user.id,
-    donorName: req.user.name,
-    donorAvatar: req.user.avatar,
-    amount: numAmount,
-    message: message || '',
-    paymentMethod: paymentMethod || 'VISA',
-    tax,
-    convenienceFee,
-    totalPaid,
-    createdAt: new Date().toISOString(),
-    status: 'completed'
-  };
+  const { data: donData, error: dErr } = await supabase
+    .from('donations')
+    .insert({
+      campaign_id: campaignId,
+      donor_id: req.user.id,
+      donor_name: req.user.name,
+      donor_avatar: req.user.avatar,
+      amount: numAmount,
+      message: message || '',
+      payment_method: paymentMethod || 'VISA',
+      tax,
+      convenience_fee: convenienceFee,
+      total_paid: totalPaid,
+      status: 'completed'
+    })
+    .select();
 
-  donations.push(donation);
+  if (dErr) return res.status(500).json({ error: 'Database error.' });
 
-  const campIdx = campaigns.findIndex(c => c.id === campaignId);
-  campaigns[campIdx].raisedAmount += numAmount;
-  campaigns[campIdx].investorCount += 1;
+  const newRaised = campaign.raisedAmount + numAmount;
+  const newCount = campaign.investorCount + 1;
+  await supabase
+    .from('campaigns')
+    .update({ raised_amount: newRaised, investor_count: newCount })
+    .eq('id', campaignId);
 
   res.status(201).json({
-    donation,
+    donation: camel(donData[0]),
     message: 'Donation successful! Thank you for your support.',
     campaign: {
-      raisedAmount: campaigns[campIdx].raisedAmount,
-      progressPercent: Math.round((campaigns[campIdx].raisedAmount / campaigns[campIdx].goalAmount) * 100)
+      raisedAmount: newRaised,
+      progressPercent: Math.round((newRaised / campaign.goalAmount) * 100)
     }
   });
 });
 
-// DELETE /api/donations/:id — Admin only
-router.delete('/:id', authenticate, requireRole('admin'), (req, res) => {
-  const idx = donations.findIndex(d => d.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ error: 'Donation not found.' });
+router.delete('/:id', authenticate, requireRole('admin'), async (req, res) => {
+  const { data: found, error: fErr } = await supabase
+    .from('donations')
+    .select('*')
+    .eq('id', req.params.id)
+    .limit(1);
 
-  const donation = donations[idx];
-  const campIdx = campaigns.findIndex(c => c.id === donation.campaignId);
-  if (campIdx !== -1) {
-    campaigns[campIdx].raisedAmount = Math.max(0, campaigns[campIdx].raisedAmount - donation.amount);
-    campaigns[campIdx].investorCount = Math.max(0, campaigns[campIdx].investorCount - 1);
+  if (fErr) return res.status(500).json({ error: 'Database error.' });
+  if (!found.length) return res.status(404).json({ error: 'Donation not found.' });
+
+  const donation = camel(found[0]);
+
+  const { data: campaigns } = await supabase
+    .from('campaigns')
+    .select('raised_amount, investor_count')
+    .eq('id', donation.campaignId)
+    .limit(1);
+
+  if (campaigns?.length) {
+    const c = camel(campaigns[0]);
+    await supabase
+      .from('campaigns')
+      .update({
+        raised_amount: Math.max(0, c.raisedAmount - donation.amount),
+        investor_count: Math.max(0, c.investorCount - 1)
+      })
+      .eq('id', donation.campaignId);
   }
 
-  donations.splice(idx, 1);
+  const { error } = await supabase.from('donations').delete().eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: 'Database error.' });
   res.json({ message: 'Donation removed successfully.' });
 });
 
