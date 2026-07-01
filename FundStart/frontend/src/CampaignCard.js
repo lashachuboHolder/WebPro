@@ -30,8 +30,8 @@ const CampaignCard = ({ campaign, showActions, onEdit, onDelete }) => {
           <div className="progress-bar-fill" style={{ width: `${Math.min(progressPercent, 100)}%` }} />
         </div>
         <div className="campaign-stats">
-          <span>👥 {backers} backers</span>
-          <span>⏰ {daysLeft} days left</span>
+          <span>{backers} backers</span>
+          <span>{daysLeft} days left</span>
         </div>
         <div className="campaign-card-actions" style={{ marginTop: 12 }}>
           <Link to={`/campaigns/${id}`} className="btn btn-primary btn-sm" style={{ flex: 1 }}>View Campaign</Link>

@@ -98,7 +98,6 @@ const Dashboard = () => {
             </div>
             {loading ? <div className="spinner" /> : campaigns.length === 0 ? (
               <div className="empty-state">
-                <div className="icon">🚀</div>
                 <h3>No campaigns yet</h3>
                 <p>Create your first campaign to start raising funds!</p>
                 <button className="btn btn-primary" onClick={openCreate}>Create Campaign</button>
@@ -116,7 +115,7 @@ const Dashboard = () => {
         {activeTab === 'donations' && (
           <div className="table-wrap">
             {donations.length === 0 ? (
-              <div className="empty-state"><div className="icon">💚</div><h3>No donations yet</h3></div>
+              <div className="empty-state"><div className="icon"></div><h3>No donations yet</h3></div>
             ) : (
               <table>
                 <thead>

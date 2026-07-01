@@ -64,7 +64,6 @@ const Campaigns = () => {
             <p className="results-count">{campaigns.length} campaigns found</p>
             {campaigns.length === 0 ? (
               <div className="empty-state">
-                <div className="icon">🔍</div>
                 <h3>No campaigns found</h3>
                 <p>Try a different search or category</p>
               </div>
