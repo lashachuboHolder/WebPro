@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -418,3 +418,151 @@ tr:hover td { background: var(--bg); }
   .navbar-links { display: none; }
   .demo-grid { grid-template-columns: 1fr; }
 }
+
+/* FUNDSTART DARK MODE START */
+:root[data-theme="dark"] {
+  --green: #22c55e;
+  --green-dark: #16a34a;
+  --navy: #f8fafc;
+  --text: #e5e7eb;
+  --text-muted: #94a3b8;
+  --border: #334155;
+  --bg: #0b1120;
+  --white: #111827;
+  --red: #f87171;
+  --yellow: #fbbf24;
+}
+
+:root[data-theme="dark"] body {
+  background: #0b1120;
+  color: var(--text);
+}
+
+:root[data-theme="dark"] .hero,
+:root[data-theme="dark"] .campaigns-hero,
+:root[data-theme="dark"] .dashboard-header,
+:root[data-theme="dark"] .donations-header,
+:root[data-theme="dark"] .admin-header {
+  background: #0f172a;
+}
+
+:root[data-theme="dark"] .btn-secondary,
+:root[data-theme="dark"] .filter-chip.active,
+:root[data-theme="dark"] .payment-btn.active {
+  background: #334155;
+  border-color: #475569;
+  color: #f8fafc;
+}
+
+:root[data-theme="dark"] .btn-outline,
+:root[data-theme="dark"] .form-control,
+:root[data-theme="dark"] .filter-chip,
+:root[data-theme="dark"] .preset-btn,
+:root[data-theme="dark"] .payment-btn,
+:root[data-theme="dark"] .demo-btn,
+:root[data-theme="dark"] .role-btn {
+  background: #111827;
+  color: #e5e7eb;
+  border-color: #475569;
+}
+
+:root[data-theme="dark"] .btn-outline:hover,
+:root[data-theme="dark"] .filter-chip:hover:not(.active),
+:root[data-theme="dark"] .preset-btn:hover,
+:root[data-theme="dark"] .payment-btn:hover,
+:root[data-theme="dark"] .demo-btn:hover {
+  border-color: #22c55e;
+  color: #f8fafc;
+}
+
+:root[data-theme="dark"] .card,
+:root[data-theme="dark"] .table-wrap,
+:root[data-theme="dark"] .modal,
+:root[data-theme="dark"] .categories-section,
+:root[data-theme="dark"] .how-section,
+:root[data-theme="dark"] .stat-card,
+:root[data-theme="dark"] .cat-stat-card {
+  background: #111827;
+}
+
+:root[data-theme="dark"] .role-btn.active {
+  background: #153522;
+  border-color: #22c55e;
+}
+
+:root[data-theme="dark"] .badge-green {
+  background: #153522;
+  color: #86efac;
+}
+
+:root[data-theme="dark"] .badge-red {
+  background: #3b1717;
+  color: #fca5a5;
+}
+
+:root[data-theme="dark"] .badge-yellow {
+  background: #3a2a0a;
+  color: #fde68a;
+}
+
+:root[data-theme="dark"] .badge-navy {
+  background: #1e2a52;
+  color: #c7d2fe;
+}
+
+:root[data-theme="dark"] .badge-gray {
+  background: #1e293b;
+  color: #cbd5e1;
+}
+
+:root[data-theme="dark"] .alert-error {
+  background: #3b1717;
+  color: #fca5a5;
+}
+
+:root[data-theme="dark"] .alert-success {
+  background: #153522;
+  color: #86efac;
+}
+
+:root[data-theme="dark"] .donate-summary,
+:root[data-theme="dark"] .profile-box {
+  background: #0f172a;
+}
+
+:root[data-theme="dark"] .theme-toggle {
+  background: #0f172a;
+  color: #e2e8f0;
+  border-color: #475569;
+}
+
+:root[data-theme="dark"] .theme-toggle:hover {
+  background: #1e293b;
+  border-color: #22c55e;
+}
+
+.theme-toggle {
+  padding: 6px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: var(--white);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.theme-toggle:hover {
+  border-color: var(--green);
+  color: var(--green-dark);
+}
+
+@media (max-width: 768px) {
+  .theme-toggle {
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+}
+/* FUNDSTART DARK MODE END */
