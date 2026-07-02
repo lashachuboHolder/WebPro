@@ -16,6 +16,7 @@ const Dashboard = () => {
   const [editCampaign, setEditCampaign] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [deleteModal, setDeleteModal] = useState(null);
@@ -46,6 +47,23 @@ const Dashboard = () => {
     setEditCampaign(c);
     setForm({ title: c.title, description: c.description, shortDescription: c.shortDescription, image: c.image, category: c.category, goalAmount: c.goalAmount, endDate: c.endDate?.slice(0, 10) });
     setError(''); setShowForm(true);
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingImage(true);
+    setError('');
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const res = await api.post('/upload', formData);
+      setForm(f => ({ ...f, image: res.data.url }));
+    } catch {
+      setError('Image upload failed.');
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleSave = async () => {
@@ -164,8 +182,10 @@ const Dashboard = () => {
               <textarea className="form-control" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Describe your campaign..." />
             </div>
             <div className="form-group">
-              <label className="form-label">Cover Image URL</label>
-              <input className="form-control" value={form.image} onChange={e => setForm({ ...form, image: e.target.value })} placeholder="https://..." />
+              <label className="form-label">Cover Image</label>
+              <input type="file" accept="image/*" className="form-control" onChange={handleImageUpload} disabled={uploadingImage} />
+              {uploadingImage && <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>Uploading...</p>}
+              {form.image && <img src={form.image} alt="Preview" style={{ marginTop: 8, width: '100%', maxHeight: 180, objectFit: 'cover', borderRadius: 8 }} />}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div className="form-group">

@@ -91,7 +91,7 @@ router.post('/', authenticate, requireRole('influencer', 'admin'), async (req, r
       title,
       description,
       short_description: shortDescription || description.slice(0, 100) + '...',
-      image: image || 'https://images.unsplash.com/photo-1497436072909-60f360e1d4b1?w=800',
+      image: image || 'https://picsum.photos/seed/campaign/800/400',
       category: category || 'General',
       goal_amount: goal,
       raised_amount: 0,
