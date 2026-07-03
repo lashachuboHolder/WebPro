@@ -1,3 +1,9 @@
+# Members
+Lasha Chubinidze
+Irakli kasradze
+Saba Gelashvili
+
+
 # Fundstart - Fundraising Platform
 
 ## How to Run
