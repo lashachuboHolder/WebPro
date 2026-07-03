@@ -68,10 +68,10 @@ const Home = () => {
           <h2 className="section-title" style={{ textAlign: 'center' }}>How It Works</h2>
           <div className="steps-grid">
             {[
-              { step: '01', title: 'Create a Campaign', desc: 'Influencers set a goal, describe their project, and launch.' },
-              { step: '02', title: 'Share With Community', desc: 'Share your campaign page with fans and followers.' },
-              { step: '03', title: 'Receive Donations', desc: 'Fans donate any amount and track progress in real time.' },
-              { step: '04', title: 'Achieve Your Goal', desc: 'Hit your milestone and bring your vision to life.' },
+              { step: '01', icon: '✏️', title: 'Create a Campaign', desc: 'Influencers set a goal, describe their project, and save it as a draft.' },
+              { step: '02', icon: '✅', title: 'Get Approved', desc: 'An admin reviews the campaign and publishes it once it\'s ready.' },
+              { step: '03', icon: '📣', title: 'Share With Community', desc: 'Share your live campaign page with fans and followers.' },
+              { step: '04', icon: '💚', title: 'Receive Donations', desc: 'Fans donate any amount and track progress in real time.' },
             ].map(s => (
               <div key={s.step} className="step-card">
                 <div className="step-number">STEP {s.step}</div>
