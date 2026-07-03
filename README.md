@@ -1,6 +1,6 @@
 # Members
-Lasha Chubinidze
-Irakli kasradze
+Lasha Chubinidze,
+Irakli kasradze,
 Saba Gelashvili
 
 
