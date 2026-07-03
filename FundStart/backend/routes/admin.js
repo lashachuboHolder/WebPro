@@ -19,6 +19,7 @@ router.get('/stats', authenticate, requireRole('admin'), async (req, res) => {
 
   const totalRaised = c.reduce((sum, x) => sum + Number(x.raisedAmount), 0);
   const activeCampaigns = c.filter(x => x.status === 'active').length;
+  const pendingCampaigns = c.filter(x => x.status === 'pending').length;
   const influencers = users.filter(u => u.role === 'influencer').length;
   const donors = users.filter(u => u.role === 'donor').length;
 
@@ -40,6 +41,7 @@ router.get('/stats', authenticate, requireRole('admin'), async (req, res) => {
       totalRaised,
       totalDonations: d.length,
       activeCampaigns,
+      pendingCampaigns,
       totalCampaigns: c.length,
       totalUsers: influencers + donors,
       influencers,
@@ -86,7 +88,7 @@ router.get('/campaigns', authenticate, requireRole('admin'), async (req, res) =>
 
 router.put('/campaigns/:id/status', authenticate, requireRole('admin'), async (req, res) => {
   const { status } = req.body;
-  if (!['active', 'suspended', 'completed', 'flagged'].includes(status)) {
+  if (!['draft', 'pending', 'active', 'completed', 'suspended', 'flagged'].includes(status)) {
     return res.status(400).json({ error: 'Invalid status.' });
   }
 
