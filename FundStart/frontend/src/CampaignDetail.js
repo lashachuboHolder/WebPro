@@ -5,6 +5,14 @@ import { useAuth } from './AuthContext';
 
 const PAYMENT_METHODS = ['VISA', 'Mastercard', 'GCPS', 'NCTO'];
 const PRESET_AMOUNTS = [100, 222, 500];
+const STATUS_BADGE = {
+  draft: 'badge-gray',
+  pending: 'badge-yellow',
+  active: 'badge-green',
+  completed: 'badge-navy',
+  suspended: 'badge-red',
+  flagged: 'badge-yellow'
+};
 
 const CampaignDetail = () => {
   const { id } = useParams();
@@ -20,6 +28,7 @@ const CampaignDetail = () => {
   const [donating, setDonating] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -51,14 +60,51 @@ const CampaignDetail = () => {
     }
   };
 
+  const handleSubmitForReview = async () => {
+    setSubmitting(true); setError('');
+    try {
+      await api.put(`/campaigns/${id}/submit`);
+      const res = await api.get(`/campaigns/${id}`);
+      setCampaign(res.data.campaign);
+      setSuccess('Campaign submitted for admin review!');
+    } catch (e) {
+      setError(e.response?.data?.error || 'Failed to submit campaign.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (loading) return <div className="spinner" />;
   if (!campaign) return null;
 
-  const { title, description, image, category, goalAmount, raisedAmount, progressPercent, investorCount, daysLeft, status, endDate } = campaign;
+  const { title, description, image, category, goalAmount, raisedAmount, progressPercent, investorCount, daysLeft, status, endDate, influencerId } = campaign;
+  const isOwner = user && user.id === influencerId;
+  const canManage = isOwner || user?.role === 'admin';
 
   return (
     <div>
       {success && <div className="success-banner">{success}</div>}
+      {canManage && (status === 'draft' || status === 'pending') && (
+        <div className={`workflow-banner ${status}`}>
+          <div className="container workflow-banner-inner">
+            <span>
+              {status === 'draft'
+                ? '📝 This campaign is a draft. It\'s only visible to you and admins until submitted for review.'
+                : '⏳ This campaign is pending admin approval. It will go live once approved.'}
+            </span>
+            {status === 'draft' && isOwner && (
+              <button className="btn btn-secondary btn-sm" onClick={handleSubmitForReview} disabled={submitting}>
+                {submitting ? 'Submitting...' : 'Submit for Review'}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+      {error && (
+        <div className="container" style={{ paddingTop: 12 }}>
+          <div className="alert alert-error">{error}</div>
+        </div>
+      )}
 
       <div className="detail-hero">
         <img src={image} alt={title} className="detail-hero-img" />
@@ -71,7 +117,7 @@ const CampaignDetail = () => {
             <span>•</span>
             <span>📅 Ends {new Date(endDate).toLocaleDateString()}</span>
             <span>•</span>
-            <span className={`badge ${status === 'active' ? 'badge-green' : 'badge-red'}`}>{status}</span>
+            <span className={`badge ${STATUS_BADGE[status] || 'badge-gray'}`}>{status}</span>
           </div>
         </div>
       </div>
