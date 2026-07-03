@@ -40,6 +40,7 @@ const Dashboard = () => {
 
   const totalRaised = campaigns.reduce((sum, c) => sum + c.raisedAmount, 0);
   const activeCampaigns = campaigns.filter(c => c.status === 'active').length;
+  const pendingCampaigns = campaigns.filter(c => c.status === 'pending').length;
   const totalInvestors = campaigns.reduce((sum, c) => sum + c.investorCount, 0);
 
   const openCreate = () => { setEditCampaign(null); setForm(emptyForm); setError(''); setShowForm(true); };
@@ -77,6 +78,11 @@ const Dashboard = () => {
     } finally { setSaving(false); }
   };
 
+  const handleSubmit = async (c) => {
+    try { await api.put(`/campaigns/${c.id}/submit`); setSuccess('Campaign submitted for admin review!'); fetchData(); }
+    catch (e) { setError(e.response?.data?.error || 'Failed to submit campaign.'); }
+  };
+
   const handleDelete = async (c) => {
     try { await api.delete(`/campaigns/${c.id}`); setDeleteModal(null); fetchData(); }
     catch (e) { alert(e.response?.data?.error || 'Failed to delete.'); }
@@ -95,6 +101,7 @@ const Dashboard = () => {
           </div>
           <div className="dash-stats">
             <div className="stat-card"><div className="stat-value">{activeCampaigns}</div><div className="stat-label">Active Campaigns</div></div>
+            <div className="stat-card"><div className="stat-value">{pendingCampaigns}</div><div className="stat-label">Pending Review</div></div>
             <div className="stat-card"><div className="stat-value">{totalInvestors}</div><div className="stat-label">Total Investors</div></div>
             <div className="stat-card"><div className="stat-value">${totalRaised.toLocaleString()}</div><div className="stat-label">Total Funding</div></div>
           </div>
@@ -123,7 +130,7 @@ const Dashboard = () => {
             ) : (
               <div className="campaigns-grid">
                 {campaigns.map(c => (
-                  <CampaignCard key={c.id} campaign={c} showActions onEdit={openEdit} onDelete={c => setDeleteModal(c)} />
+                  <CampaignCard key={c.id} campaign={c} showActions onEdit={openEdit} onDelete={c => setDeleteModal(c)} onSubmit={handleSubmit} />
                 ))}
               </div>
             )}
@@ -203,9 +210,14 @@ const Dashboard = () => {
               <label className="form-label">End Date *</label>
               <input type="date" className="form-control" value={form.endDate} onChange={e => setForm({ ...form, endDate: e.target.value })} min={new Date().toISOString().slice(0, 10)} />
             </div>
+            {!editCampaign && (
+              <p className="campaign-workflow-note" style={{ marginBottom: 12 }}>
+                📝 New campaigns are saved as a draft first. Submit for review from your dashboard when you're ready to go live.
+              </p>
+            )}
             <div style={{ display: 'flex', gap: 10 }}>
               <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleSave} disabled={saving}>
-                {saving ? 'Saving...' : editCampaign ? 'Update Campaign' : 'Create Campaign'}
+                {saving ? 'Saving...' : editCampaign ? 'Update Campaign' : 'Save as Draft'}
               </button>
               <button className="btn btn-outline" onClick={() => setShowForm(false)}>Cancel</button>
             </div>
