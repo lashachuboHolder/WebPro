@@ -1,16 +1,32 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const CampaignCard = ({ campaign, showActions, onEdit, onDelete }) => {
-  const { id, title, shortDescription, image, category, goalAmount, raisedAmount, progressPercent, backers, daysLeft, status } = campaign;
+const STATUS_CLASS = {
+  draft: 'badge-gray',
+  pending: 'badge-yellow',
+  active: 'badge-green',
+  completed: 'badge-navy',
+  suspended: 'badge-red',
+  flagged: 'badge-yellow'
+};
 
-  const statusClass = { active: 'badge-green', suspended: 'badge-red', flagged: 'badge-yellow', completed: 'badge-navy' };
+const STATUS_LABEL = {
+  draft: 'Draft',
+  pending: 'Pending Review',
+  active: 'Active',
+  completed: 'Completed',
+  suspended: 'Suspended',
+  flagged: 'Flagged'
+};
+
+const CampaignCard = ({ campaign, showActions, onEdit, onDelete, onSubmit }) => {
+  const { id, title, shortDescription, image, category, goalAmount, raisedAmount, progressPercent, backers, daysLeft, status } = campaign;
 
   return (
     <div className="campaign-card card">
       <div className="campaign-card-img-wrap">
         <img src={image} alt={title} className="campaign-card-img" loading="lazy" />
-        <span className={`badge ${statusClass[status] || 'badge-gray'} campaign-status-badge`}>{status}</span>
+        <span className={`badge ${STATUS_CLASS[status] || 'badge-gray'} campaign-status-badge`}>{STATUS_LABEL[status] || status}</span>
         <span className="badge badge-navy campaign-category-badge">{category}</span>
       </div>
       <div className="card-body">
@@ -33,10 +49,23 @@ const CampaignCard = ({ campaign, showActions, onEdit, onDelete }) => {
           <span>{backers} backers</span>
           <span>{daysLeft} days left</span>
         </div>
+        {showActions && status === 'pending' && (
+          <p className="campaign-workflow-note">⏳ Awaiting admin approval — not visible to the public yet.</p>
+        )}
+        {showActions && status === 'draft' && (
+          <p className="campaign-workflow-note">📝 Draft — submit it for review to go live.</p>
+        )}
         <div className="campaign-card-actions" style={{ marginTop: 12 }}>
-          <Link to={`/campaigns/${id}`} className="btn btn-primary btn-sm" style={{ flex: 1 }}>View Campaign</Link>
+          {status === 'active' || status === 'completed' ? (
+            <Link to={`/campaigns/${id}`} className="btn btn-primary btn-sm" style={{ flex: 1 }}>View Campaign</Link>
+          ) : showActions ? (
+            <Link to={`/campaigns/${id}`} className="btn btn-outline btn-sm" style={{ flex: 1 }}>Preview</Link>
+          ) : null}
           {showActions && (
             <>
+              {status === 'draft' && (
+                <button className="btn btn-secondary btn-sm" onClick={() => onSubmit?.(campaign)}>Submit for Review</button>
+              )}
               <button className="btn btn-outline btn-sm" onClick={() => onEdit?.(campaign)}>Edit</button>
               <button className="btn btn-danger btn-sm" onClick={() => onDelete?.(campaign)}>Delete</button>
             </>
