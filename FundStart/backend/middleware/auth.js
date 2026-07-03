@@ -17,4 +17,13 @@ const requireRole = (...roles) => (req, res, next) => {
   next();
 };
 
-module.exports = { authenticate, requireRole, sessions };
+// Like `authenticate`, but doesn't reject when there's no/invalid token.
+// Used on public routes that need to know "who's asking" to decide what to reveal
+// (e.g. a draft campaign is visible to its owner/an admin, but 404s for everyone else).
+const authenticateOptional = (req, res, next) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (token && sessions[token]) req.user = sessions[token];
+  next();
+};
+
+module.exports = { authenticate, authenticateOptional, requireRole, sessions };
